@@ -46,7 +46,6 @@
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/TU_GOOGLE_SHEET_ID/export?format=csv';
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Cargar datos del Google Sheet al iniciar
             fetch(SHEET_CSV_URL)
                 .then(response => response.text())
                 .then(csvText => {
@@ -75,7 +74,6 @@
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             if (!query) return;
 
-            // Filtrar filas que coincidan con la búsqueda en cualquier columna
             const matchedRows = sheetData.filter(row => {
                 return Object.values(row).some(val => 
                     String(val).toLowerCase().includes(query)
@@ -97,7 +95,6 @@
                 leafletMap.remove();
             }
 
-            // Inicializar Mapa centrado en Santo Domingo por defecto
             leafletMap = L.map('map').setView([-0.2530, -79.1753], 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -110,18 +107,21 @@
             let kmzFound = false;
 
             matchedRows.forEach((row) => {
-                // Lee el nombre del archivo KMZ directamente desde la columna correspondiente del Google Sheet
-                const kmzFileName = (row.KMZ || row.Kmz || row.LINK || row.Link || row[Object.keys(row)[8]] || '').trim();
+                let kmzFileName = (row.KMZ || row.Kmz || row.LINK || row.Link || row[Object.keys(row)[8]] || '').trim();
 
                 if (kmzFileName) {
+                    // Si el texto obtenido no incluye la extensión .kmz, se la agregamos automáticamente
+                    if (!kmzFileName.toLowerCase().endsWith('.kmz')) {
+                        kmzFileName += '.kmz';
+                    }
+
                     kmzFound = true;
-                    statusEl.innerText = 'Cargando capa geográfica desde GitHub...';
+                    statusEl.innerText = `Cargando ${kmzFileName} desde GitHub...`;
                     statusEl.className = 'text-xs text-amber-400 font-medium';
 
-                    // Petición directa al archivo KMZ alojado en GitHub Pages
                     fetch(kmzFileName)
                         .then(response => {
-                            if (!response.ok) throw new Error(`No se encontró el archivo "${kmzFileName}" en el repositorio.`);
+                            if (!response.ok) throw new Error(`No se encontró el archivo "${kmzFileName}" en el repositorio de GitHub.`);
                             return response.arrayBuffer();
                         })
                         .then(buffer => JSZip.loadAsync(buffer))
