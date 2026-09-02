@@ -102,11 +102,11 @@
         <!-- Tarjetas KPI -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="card p-5 rounded-xl">
-                <p class="text-xs text-slate-400 font-medium uppercase">Total Rutas FTTH</p>
+                <p id="kpi-label-1" class="text-xs text-slate-400 font-medium uppercase">Total Rutas FTTH</p>
                 <h3 id="kpi-total" class="text-3xl font-bold mt-2">0</h3>
             </div>
             <div class="card p-5 rounded-xl">
-                <p class="text-xs text-slate-400 font-medium uppercase">Total Cajas Liberadas</p>
+                <p id="kpi-label-2" class="text-xs text-slate-400 font-medium uppercase">Total Cajas Liberadas</p>
                 <h3 id="kpi-liberadas" class="text-3xl font-bold text-emerald-400 mt-2">0</h3>
             </div>
             <div class="card p-5 rounded-xl">
@@ -180,6 +180,7 @@
 
         let rawData = [];
         let filteredData = [];
+        let currentArista = 'Construcción';
         let chartEstadoInstance = null;
         let chartMotivoInstance = null;
         let leafletMap = null;
@@ -187,6 +188,7 @@
         lucide.createIcons();
 
         function changeArista(arista) {
+            currentArista = arista;
             const buttons = {
                 'Construcción': 'btn-construccion',
                 'Interurbano': 'btn-interurbano',
@@ -204,6 +206,22 @@
             });
 
             document.getElementById('current-title').innerText = `${arista} Santo Domingo`;
+
+            // Actualización dinámica de etiquetas de KPI según la arista seleccionada
+            if (arista === 'Interurbano') {
+                document.getElementById('kpi-label-1').innerText = 'Total Enlaces';
+                document.getElementById('kpi-label-2').innerText = 'Total Puntos Liberados';
+            } else if (arista === 'Soporte') {
+                document.getElementById('kpi-label-1').innerText = 'Total Tickets';
+                document.getElementById('kpi-label-2').innerText = 'Total Resueltos';
+            } else if (arista === 'Retiros') {
+                document.getElementById('kpi-label-1').innerText = 'Total Órdenes';
+                document.getElementById('kpi-label-2').innerText = 'Total Retirados';
+            } else {
+                document.getElementById('kpi-label-1').innerText = 'Total Rutas FTTH';
+                document.getElementById('kpi-label-2').innerText = 'Total Cajas Liberadas';
+            }
+
             applyFilters();
         }
 
@@ -246,6 +264,15 @@
             const selectedMonth = document.getElementById('filter-month').value;
 
             filteredData = rawData.filter(row => {
+                // Filtro por Arista (si la columna ARISTA o TIPO está presente en el Google Sheet)
+                const aristaVal = row.ARISTA || row.Arista || row.TIPO || row.Tipo || '';
+                let matchArista = true;
+                if (aristaVal) {
+                    const cleanArista = aristaVal.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    const targetArista = currentArista.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    matchArista = cleanArista.includes(targetArista);
+                }
+
                 const fechaKey = row.FECHA || row.Fecha || '';
                 let matchDate = true;
 
@@ -261,7 +288,7 @@
                     }
                 }
 
-                return matchDate;
+                return matchArista && matchDate;
             });
 
             updateMetricsAndCharts(filteredData);
@@ -278,7 +305,7 @@
                 const estadoVal = d.ESTADO || d.Estado || '';
                 let estado = estadoVal.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-                const cajasVal = d.CAJAS || d.Cajas || 0;
+                const cajasVal = d.CAJAS || d.Cajas || d.CANTIDAD || d.Cantidad || 0;
                 const cajasNum = parseInt(cajasVal, 10) || 0;
 
                 if (estado.includes('PENDIEN')) {
@@ -298,10 +325,10 @@
 
             const motivosCajas = {};
             data.forEach(d => {
-                const motivoVal = d.MOTIVO || d.Motivo || '';
+                const motivoVal = d.MOTIVO || d.Motivo || d.CATEGORIA || d.Categoria || '';
                 if (motivoVal) {
                     let m = motivoVal.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    const cajasVal = d.CAJAS || d.Cajas || 0;
+                    const cajasVal = d.CAJAS || d.Cajas || d.CANTIDAD || d.Cantidad || 0;
                     const cajas = parseInt(cajasVal, 10) || 0;
                     if (m) {
                         motivosCajas[m] = (motivosCajas[m] || 0) + cajas;
@@ -341,7 +368,7 @@
                 data: {
                     labels: motivoLabels,
                     datasets: [{
-                        label: 'Cajas',
+                        label: 'Cantidad',
                         data: motivoValues,
                         backgroundColor: '#3b82f6',
                         hoverBackgroundColor: '#60a5fa',
@@ -362,7 +389,7 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (ctx) => `Cajas: ${ctx.raw} (Haz clic para ver mapa y traza)`
+                                label: (ctx) => `Cantidad: ${ctx.raw} (Haz clic para ver mapa y traza)`
                             }
                         }
                     },
@@ -375,10 +402,10 @@
         }
 
         function showMotivoDetailModal(motivo) {
-            document.getElementById('modal-title').innerText = `Motivo: ${motivo}`;
+            document.getElementById('modal-title').innerText = `Detalle: ${motivo}`;
             
             const matchedRows = filteredData.filter(d => {
-                const m = (d.MOTIVO || d.Motivo || '').toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const m = (d.MOTIVO || d.Motivo || d.CATEGORIA || d.Categoria || '').toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 return m === motivo;
             });
 
@@ -397,7 +424,6 @@
                     const obsCard = document.createElement('div');
                     obsCard.className = 'p-3 bg-slate-800/80 rounded-lg border border-slate-700 text-sm text-slate-200 leading-relaxed';
                     
-                    // Fuerza el salto de línea y destaca las etiquetas visualmente
                     let formattedObs = obs
                         .replace(/Soluci[oó]n:/gi, '<br><br><span class="text-white font-semibold">Solución:</span>')
                         .replace(/Problema:/gi, '<span class="text-white font-semibold">Problema:</span>');
@@ -405,7 +431,7 @@
                     obsCard.innerHTML = formattedObs;
                     obsContainer.appendChild(obsCard);
                 });
-            }else {
+            } else {
                 obsContainer.innerHTML = '<span class="text-xs text-slate-500">No hay observaciones registradas.</span>';
             }
 
@@ -444,7 +470,6 @@
             matchedRows.forEach((row) => {
                 let rawKmzInput = '';
 
-                // Búsqueda inteligente y exhaustiva en todas las columnas de la fila actual
                 for (let key of Object.keys(row)) {
                     const upperKey = key.toUpperCase();
                     const val = (row[key] || '').toString().trim();
@@ -456,7 +481,6 @@
                     }
                 }
 
-                // Fallback global si no encontró por nombre de columna
                 if (!rawKmzInput) {
                     for (let val of Object.values(row)) {
                         const strVal = (val || '').toString().trim();
@@ -503,7 +527,7 @@
                         .then(kmlText => {
                             const customLayer = omnivore.kml.parse(kmlText, null, L.geoJson(null, {
                                 pointToLayer: function (feature, latlng) {
-                                    const boxName = feature.properties ? (feature.properties.name || 'Caja FTTH') : 'Caja FTTH';
+                                    const boxName = feature.properties ? (feature.properties.name || 'Elemento') : 'Elemento';
 
                                     const customIcon = L.divIcon({
                                         className: 'custom-pink-box-pin',
