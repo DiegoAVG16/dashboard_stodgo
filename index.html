@@ -411,7 +411,6 @@
             }, 200);
         }
 
-        // EXTRACCIÓN ROBUSTA DE ID DE GOOGLE DRIVE O ENLACE LOCAL/GITHUB
         function extractDriveId(url) {
             if (!url) return null;
             const match = url.match(/([a-zA-Z0-9_-]{28,45})/);
@@ -425,7 +424,6 @@
                 leafletMap.remove();
             }
 
-            // Inicializar Mapa centrado en Santo Domingo
             leafletMap = L.map('map').setView([-0.2530, -79.1753], 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -438,7 +436,30 @@
             let kmzFound = false;
 
             matchedRows.forEach((row) => {
-                const rawKmzInput = (row.KMZ || row.Kmz || row.LINK || row.Link || row[Object.keys(row)[8]] || '').trim();
+                let rawKmzInput = '';
+
+                // Búsqueda inteligente y exhaustiva en todas las columnas de la fila actual
+                for (let key of Object.keys(row)) {
+                    const upperKey = key.toUpperCase();
+                    const val = (row[key] || '').toString().trim();
+                    if (upperKey.includes('KMZ') || upperKey.includes('LINK') || upperKey.includes('URL') || upperKey.includes('MAPA') || upperKey.includes('ARCHIVO') || val.toLowerCase().endsWith('.kmz') || val.includes('drive.google.com')) {
+                        if (val !== '') {
+                            rawKmzInput = val;
+                            break;
+                        }
+                    }
+                }
+
+                // Fallback global si no encontró por nombre de columna
+                if (!rawKmzInput) {
+                    for (let val of Object.values(row)) {
+                        const strVal = (val || '').toString().trim();
+                        if (strVal.toLowerCase().endsWith('.kmz') || strVal.includes('drive.google.com')) {
+                            rawKmzInput = strVal;
+                            break;
+                        }
+                    }
+                }
                 
                 if (rawKmzInput) {
                     kmzFound = true;
@@ -449,7 +470,6 @@
                     const fileId = extractDriveId(rawKmzInput);
 
                     if (fileId) {
-                        // Caso Google Drive
                         const targetDriveUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
                         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetDriveUrl)}`;
                         fetchPromise = fetch(proxyUrl).then(res => {
@@ -457,7 +477,6 @@
                             return res.arrayBuffer();
                         });
                     } else {
-                        // Caso Archivo Local o Nombre de Archivo Directo (ej. REINGENIERIA JULIO.kmz)
                         let fileName = rawKmzInput;
                         if (!fileName.toLowerCase().endsWith('.kmz')) {
                             fileName += '.kmz';
