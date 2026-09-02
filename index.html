@@ -18,7 +18,7 @@
     <!-- JSZip para descomprimir archivos KMZ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- omnivore plugin para parsear KML -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
+    <script src="https://unpkg.com/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
         .card { background-color: #1e293b; border: 1px solid #334155; }
@@ -38,7 +38,7 @@
 
             <!-- Navegación de Aristas -->
             <div class="mb-6">
-                <p class="text-xs font-semibold text-slate-500 uppercase mb-3">Aristas</p>
+                <p class="text-xs font-semibold text-slate-500 uppercase mb-3">Aristas (Pestañas)</p>
                 <nav class="space-y-1">
                     <button onclick="changeArista('Construcción')" id="btn-construccion" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white transition-colors">
                         <i data-lucide="hammer" class="w-4 h-4"></i> Construcción
@@ -102,11 +102,11 @@
         <!-- Tarjetas KPI -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="card p-5 rounded-xl">
-                <p id="kpi-label-1" class="text-xs text-slate-400 font-medium uppercase">Total Rutas FTTH</p>
+                <p id="kpi-label-1" class="text-xs text-slate-400 font-medium uppercase">Total Registros</p>
                 <h3 id="kpi-total" class="text-3xl font-bold mt-2">0</h3>
             </div>
             <div class="card p-5 rounded-xl">
-                <p id="kpi-label-2" class="text-xs text-slate-400 font-medium uppercase">Total Cajas Liberadas</p>
+                <p id="kpi-label-2" class="text-xs text-slate-400 font-medium uppercase">Total Liberados / Cantidad</p>
                 <h3 id="kpi-liberadas" class="text-3xl font-bold text-emerald-400 mt-2">0</h3>
             </div>
             <div class="card p-5 rounded-xl">
@@ -129,7 +129,7 @@
             </div>
             <div class="card p-6 rounded-xl">
                 <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-sm font-semibold text-slate-300">Distribución por Motivo (Total Cajas)</h4>
+                    <h4 class="text-sm font-semibold text-slate-300">Distribución por Categoría / Motivo</h4>
                     <span class="text-xs text-blue-400 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">Haz clic en una barra</span>
                 </div>
                 <div class="h-64 flex justify-center cursor-pointer">
@@ -151,23 +151,21 @@
                     <i data-lucide="map-pin" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h3 id="modal-title" class="text-xl font-bold text-white">Detalle de Motivo</h3>
-                    <p class="text-xs text-slate-400">Observaciones y renderizado preciso del KMZ</p>
+                    <h3 id="modal-title" class="text-xl font-bold text-white">Detalle de Registro</h3>
+                    <p class="text-xs text-slate-400">Observaciones y renderizado del KMZ</p>
                 </div>
             </div>
 
             <!-- Observaciones -->
             <div class="mb-6">
                 <h4 class="text-xs font-semibold uppercase text-slate-400 mb-2 tracking-wider">Observaciones</h4>
-                <div id="modal-obs-list" class="space-y-2 max-h-36 overflow-y-auto pr-2">
-                    <!-- Dinámico -->
-                </div>
+                <div id="modal-obs-list" class="space-y-2 max-h-36 overflow-y-auto pr-2"></div>
             </div>
 
             <!-- Visor del Mapa -->
             <div>
                 <div class="flex justify-between items-center mb-2">
-                    <h4 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Ubicación de Cajas / Traza KMZ</h4>
+                    <h4 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Ubicación / Traza KMZ</h4>
                     <span id="map-status" class="text-xs text-amber-400 font-medium">Cargando archivo geográfico...</span>
                 </div>
                 <div id="map" class="bg-slate-900 border border-slate-700"></div>
@@ -176,7 +174,13 @@
     </div>
 
     <script>
-        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=628361430&single=true&output=csv';
+        // Mapeo de enlaces CSV independientes para cada pestaña/arista de Google Sheets
+        const ARISTA_URLS = {
+            'Construcción': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=628361430&single=true&output=csv',
+            'Interurbano': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=AQUI_PEGAR_GID_INTERURBANO&single=true&output=csv',
+            'Soporte': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=AQUI_PEGAR_GID_SOPORTE&single=true&output=csv',
+            'Retiros': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=AQUI_PEGAR_GID_RETIROS&single=true&output=csv'
+        };
 
         let rawData = [];
         let filteredData = [];
@@ -207,33 +211,40 @@
 
             document.getElementById('current-title').innerText = `${arista} Santo Domingo`;
 
-            // Actualización dinámica de etiquetas de KPI según la arista seleccionada
+            // Etiquetas dinámicas según arista
             if (arista === 'Interurbano') {
                 document.getElementById('kpi-label-1').innerText = 'Total Enlaces';
-                document.getElementById('kpi-label-2').innerText = 'Total Puntos Liberados';
+                document.getElementById('kpi-label-2').innerText = 'Puntos Liberados';
             } else if (arista === 'Soporte') {
                 document.getElementById('kpi-label-1').innerText = 'Total Tickets';
-                document.getElementById('kpi-label-2').innerText = 'Total Resueltos';
+                document.getElementById('kpi-label-2').innerText = 'Tickets Resueltos';
             } else if (arista === 'Retiros') {
                 document.getElementById('kpi-label-1').innerText = 'Total Órdenes';
-                document.getElementById('kpi-label-2').innerText = 'Total Retirados';
+                document.getElementById('kpi-label-2').innerText = 'Equipos Retirados';
             } else {
-                document.getElementById('kpi-label-1').innerText = 'Total Rutas FTTH';
-                document.getElementById('kpi-label-2').innerText = 'Total Cajas Liberadas';
+                document.getElementById('kpi-label-1').innerText = 'Total Rutas';
+                document.getElementById('kpi-label-2').innerText = 'Cajas Liberadas';
             }
 
-            applyFilters();
+            loadData();
         }
 
         function loadData() {
-            Papa.parse(SHEET_CSV_URL, {
+            const targetUrl = ARISTA_URLS[currentArista];
+            
+            Papa.parse(targetUrl, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
                     rawData = results.data;
+                    console.log(`Datos cargados para [${currentArista}]:`, rawData);
                     populateYearFilter();
                     applyFilters();
+                },
+                error: function(err) {
+                    console.error(`Error al cargar datos de ${currentArista}:`, err);
+                    alert(`Verifica que la pestaña "${currentArista}" esté publicada en la web y su GID sea correcto.`);
                 }
             });
         }
@@ -243,9 +254,17 @@
             const years = new Set();
 
             rawData.forEach(row => {
-                const fechaKey = row.FECHA || row.Fecha || Object.values(row)[0];
+                let fechaKey = '';
+                for (let key in row) {
+                    if (key.toUpperCase().includes('FECHA')) {
+                        fechaKey = row[key];
+                        break;
+                    }
+                }
+                if (!fechaKey) fechaKey = Object.values(row)[0];
+
                 if (fechaKey) {
-                    const parts = fechaKey.split('/');
+                    const parts = fechaKey.toString().split('/');
                     if (parts.length === 3) years.add(parts[2].trim());
                 }
             });
@@ -264,20 +283,18 @@
             const selectedMonth = document.getElementById('filter-month').value;
 
             filteredData = rawData.filter(row => {
-                // Filtro por Arista (si la columna ARISTA o TIPO está presente en el Google Sheet)
-                const aristaVal = row.ARISTA || row.Arista || row.TIPO || row.Tipo || '';
-                let matchArista = true;
-                if (aristaVal) {
-                    const cleanArista = aristaVal.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    const targetArista = currentArista.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    matchArista = cleanArista.includes(targetArista);
+                let fechaKey = '';
+                for (let key in row) {
+                    if (key.toUpperCase().includes('FECHA')) {
+                        fechaKey = row[key];
+                        break;
+                    }
                 }
+                if (!fechaKey) fechaKey = Object.values(row)[0] || '';
 
-                const fechaKey = row.FECHA || row.Fecha || '';
                 let matchDate = true;
-
                 if (fechaKey) {
-                    const parts = fechaKey.split('/');
+                    const parts = fechaKey.toString().split('/');
                     if (parts.length === 3) {
                         const month = parts[1].padStart(2, '0');
                         const year = parts[2].trim();
@@ -288,61 +305,88 @@
                     }
                 }
 
-                return matchArista && matchDate;
+                return matchDate;
             });
 
             updateMetricsAndCharts(filteredData);
         }
 
         function updateMetricsAndCharts(data) {
-            const totalRutas = data.length;
+            const totalRegistros = data.length;
 
-            let totalCajasLiberadas = 0;
+            let totalMetricaNum = 0;
             let countLiberadas = 0;
             let countPendientes = 0;
 
             data.forEach(d => {
-                const estadoVal = d.ESTADO || d.Estado || '';
+                let estadoVal = '';
+                for (let key in d) {
+                    if (key.toUpperCase().includes('ESTADO')) {
+                        estadoVal = d[key];
+                        break;
+                    }
+                }
                 let estado = estadoVal.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-                const cajasVal = d.CAJAS || d.Cajas || d.CANTIDAD || d.Cantidad || 0;
-                const cajasNum = parseInt(cajasVal, 10) || 0;
+                let valCantidad = 0;
+                for (let key in d) {
+                    const upperKey = key.toUpperCase();
+                    if (upperKey.includes('CANTIDAD') || upperKey.includes('CAJA') || upperKey.includes('PUNTO') || upperKey.includes('ENLACE') || upperKey.includes('TICKET') || upperKey.includes('ORDEN')) {
+                        valCantidad = d[key];
+                        break;
+                    }
+                }
+                const numCantidad = parseInt(valCantidad, 10) || 1;
 
                 if (estado.includes('PENDIEN')) {
                     countPendientes++;
                 } else {
                     countLiberadas++;
-                    totalCajasLiberadas += cajasNum;
+                    totalMetricaNum += numCantidad;
                 }
             });
 
-            const avance = totalRutas > 0 ? ((countLiberadas / totalRutas) * 100).toFixed(1) : 0;
+            const avance = totalRegistros > 0 ? ((countLiberadas / totalRegistros) * 100).toFixed(1) : 0;
 
-            document.getElementById('kpi-total').innerText = totalRutas;
-            document.getElementById('kpi-liberadas').innerText = totalCajasLiberadas;
+            document.getElementById('kpi-total').innerText = totalRegistros;
+            document.getElementById('kpi-liberadas').innerText = totalMetricaNum;
             document.getElementById('kpi-pendientes').innerText = countPendientes;
             document.getElementById('kpi-avance').innerText = `${avance}%`;
 
-            const motivosCajas = {};
+            const motivosMap = {};
             data.forEach(d => {
-                const motivoVal = d.MOTIVO || d.Motivo || d.CATEGORIA || d.Categoria || '';
+                let motivoVal = '';
+                for (let key in d) {
+                    const upperKey = key.toUpperCase();
+                    if (upperKey.includes('MOTIVO') || upperKey.includes('CATEGORIA') || upperKey.includes('TIPO') || upperKey.includes('DESCRIPCION')) {
+                        if (!upperKey.includes('ARISTA')) {
+                            motivoVal = d[key];
+                            break;
+                        }
+                    }
+                }
                 if (motivoVal) {
                     let m = motivoVal.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    const cajasVal = d.CAJAS || d.Cajas || d.CANTIDAD || d.Cantidad || 0;
-                    const cajas = parseInt(cajasVal, 10) || 0;
-                    if (m) {
-                        motivosCajas[m] = (motivosCajas[m] || 0) + cajas;
+                    
+                    let valCantidad = 1;
+                    for (let key in d) {
+                        const upperKey = key.toUpperCase();
+                        if (upperKey.includes('CANTIDAD') || upperKey.includes('CAJA') || upperKey.includes('PUNTO') || upperKey.includes('ENLACE')) {
+                            valCantidad = d[key];
+                            break;
+                        }
                     }
+                    const cantidad = parseInt(valCantidad, 10) || 1;
+                    motivosMap[m] = (motivosMap[m] || 0) + cantidad;
                 }
             });
 
-            // Gráfico Estado
             if (chartEstadoInstance) chartEstadoInstance.destroy();
             const ctxEstado = document.getElementById('chartEstado').getContext('2d');
             chartEstadoInstance = new Chart(ctxEstado, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Liberadas', 'Pendientes'],
+                    labels: ['Liberados / Completados', 'Pendientes'],
                     datasets: [{
                         data: [countLiberadas, countPendientes],
                         backgroundColor: ['#10b981', '#f59e0b'],
@@ -356,12 +400,11 @@
                 }
             });
 
-            // Gráfico Motivos
             if (chartMotivoInstance) chartMotivoInstance.destroy();
             const ctxMotivo = document.getElementById('chartMotivo').getContext('2d');
             
-            const motivoLabels = Object.keys(motivosCajas);
-            const motivoValues = Object.values(motivosCajas);
+            const motivoLabels = Object.keys(motivosMap);
+            const motivoValues = Object.values(motivosMap);
 
             chartMotivoInstance = new Chart(ctxMotivo, {
                 type: 'bar',
@@ -389,7 +432,7 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (ctx) => `Cantidad: ${ctx.raw} (Haz clic para ver mapa y traza)`
+                                label: (ctx) => `Cantidad: ${ctx.raw} (Haz clic para ver detalles y mapa)`
                             }
                         }
                     },
@@ -405,8 +448,18 @@
             document.getElementById('modal-title').innerText = `Detalle: ${motivo}`;
             
             const matchedRows = filteredData.filter(d => {
-                const m = (d.MOTIVO || d.Motivo || d.CATEGORIA || d.Categoria || '').toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                return m === motivo;
+                let match = false;
+                for (let key in d) {
+                    const upperKey = key.toUpperCase();
+                    if (upperKey.includes('MOTIVO') || upperKey.includes('CATEGORIA') || upperKey.includes('TIPO')) {
+                        const m = (d[key] || '').toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        if (m === motivo) {
+                            match = true;
+                            break;
+                        }
+                    }
+                }
+                return match;
             });
 
             const obsContainer = document.getElementById('modal-obs-list');
@@ -414,7 +467,13 @@
 
             const uniqueObs = new Set();
             matchedRows.forEach((row) => {
-                const obsVal = row.OBSERVACIONES || row.Observaciones || row.OBSERVACION || row.Observacion || row[Object.keys(row)[7]] || '';
+                let obsVal = '';
+                for (let key in row) {
+                    if (key.toUpperCase().includes('OBSERVACIO')) {
+                        obsVal = row[key];
+                        break;
+                    }
+                }
                 const cleanObs = obsVal.toString().trim();
                 if (cleanObs !== '') uniqueObs.add(cleanObs);
             });
@@ -481,16 +540,6 @@
                     }
                 }
 
-                if (!rawKmzInput) {
-                    for (let val of Object.values(row)) {
-                        const strVal = (val || '').toString().trim();
-                        if (strVal.toLowerCase().endsWith('.kmz') || strVal.includes('drive.google.com')) {
-                            rawKmzInput = strVal;
-                            break;
-                        }
-                    }
-                }
-                
                 if (rawKmzInput) {
                     kmzFound = true;
                     statusEl.innerText = 'Cargando archivo geográfico...';
@@ -503,16 +552,14 @@
                         const targetDriveUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
                         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetDriveUrl)}`;
                         fetchPromise = fetch(proxyUrl).then(res => {
-                            if (!res.ok) throw new Error("No se pudo obtener el archivo del servidor de Drive");
+                            if (!res.ok) throw new Error("No se pudo obtener el archivo de Google Drive");
                             return res.arrayBuffer();
                         });
                     } else {
                         let fileName = rawKmzInput;
-                        if (!fileName.toLowerCase().endsWith('.kmz')) {
-                            fileName += '.kmz';
-                        }
+                        if (!fileName.toLowerCase().endsWith('.kmz')) fileName += '.kmz';
                         fetchPromise = fetch(fileName).then(res => {
-                            if (!res.ok) throw new Error(`No se encontró el archivo "${fileName}"`);
+                            if (!res.ok) throw new Error(`No se encontró "${fileName}"`);
                             return res.arrayBuffer();
                         });
                     }
@@ -521,14 +568,13 @@
                         .then(buffer => JSZip.loadAsync(buffer))
                         .then(zip => {
                             const kmlFileName = Object.keys(zip.files).find(name => name.toLowerCase().endsWith('.kml'));
-                            if (!kmlFileName) throw new Error("El archivo .kmz no posee un .kml interno válido");
+                            if (!kmlFileName) throw new Error("El archivo .kmz no contiene un .kml válido");
                             return zip.files[kmlFileName].async("string");
                         })
                         .then(kmlText => {
                             const customLayer = omnivore.kml.parse(kmlText, null, L.geoJson(null, {
                                 pointToLayer: function (feature, latlng) {
                                     const boxName = feature.properties ? (feature.properties.name || 'Elemento') : 'Elemento';
-
                                     const customIcon = L.divIcon({
                                         className: 'custom-pink-box-pin',
                                         html: `
@@ -545,29 +591,24 @@
                                         iconSize: [0, 0],
                                         iconAnchor: [0, 0]
                                     });
-
                                     return L.marker(latlng, { icon: customIcon });
                                 },
                                 style: function () {
-                                    return {
-                                        color: '#E91E63',
-                                        weight: 4,
-                                        opacity: 0.85
-                                    };
+                                    return { color: '#E91E63', weight: 4, opacity: 0.85 };
                                 }
                             }));
 
                             customLayer.on('ready', function() {
                                 featureGroup.addLayer(customLayer);
                                 leafletMap.fitBounds(featureGroup.getBounds(), { padding: [30, 30] });
-                                statusEl.innerText = 'Traza y elementos renderizados correctamente';
+                                statusEl.innerText = 'Traza renderizada correctamente';
                                 statusEl.className = 'text-xs text-emerald-400 font-medium';
                             });
 
                             customLayer.addTo(leafletMap);
                         })
                         .catch(err => {
-                            console.error("Error al procesar KMZ:", err);
+                            console.error("Error KMZ:", err);
                             statusEl.innerText = `⚠️ Error: ${err.message}`;
                             statusEl.className = 'text-xs text-red-400 font-medium';
                         });
