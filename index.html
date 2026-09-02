@@ -40,8 +40,8 @@
             <div class="mb-6">
                 <p class="text-xs font-semibold text-slate-500 uppercase mb-3">Aristas (Pestañas)</p>
                 <nav class="space-y-1">
-                    <button onclick="changeArista('Construcción')" id="btn-construccion" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white transition-colors">
-                        <i data-lucide="hammer" class="w-4 h-4"></i> Construcción
+                    <button onclick="changeArista('Resumen Const')" id="btn-construccion" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white transition-colors">
+                        <i data-lucide="hammer" class="w-4 h-4"></i> Resumen Const
                     </button>
                     <button onclick="changeArista('Interurbano')" id="btn-interurbano" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
                         <i data-lucide="network" class="w-4 h-4"></i> Interurbano
@@ -91,7 +91,7 @@
     <main class="flex-1 p-8 overflow-y-auto">
         <header class="flex justify-between items-center mb-8">
             <div>
-                <h2 id="current-title" class="text-2xl font-bold tracking-tight">Construcción Santo Domingo</h2>
+                <h2 id="current-title" class="text-2xl font-bold tracking-tight">Resumen Const Santo Domingo</h2>
                 <p class="text-sm text-slate-400">Avance operativo e indicadores clave</p>
             </div>
             <button onclick="loadData()" class="px-4 py-2 bg-slate-800 border border-slate-700 hover:bg-slate-700 rounded-lg text-sm flex items-center gap-2 transition-colors">
@@ -102,11 +102,11 @@
         <!-- Tarjetas KPI -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="card p-5 rounded-xl">
-                <p id="kpi-label-1" class="text-xs text-slate-400 font-medium uppercase">Total Registros</p>
+                <p id="kpi-label-1" class="text-xs text-slate-400 font-medium uppercase">Total Rutas</p>
                 <h3 id="kpi-total" class="text-3xl font-bold mt-2">0</h3>
             </div>
             <div class="card p-5 rounded-xl">
-                <p id="kpi-label-2" class="text-xs text-slate-400 font-medium uppercase">Total Liberados / Cantidad</p>
+                <p id="kpi-label-2" class="text-xs text-slate-400 font-medium uppercase">Cajas Liberadas</p>
                 <h3 id="kpi-liberadas" class="text-3xl font-bold text-emerald-400 mt-2">0</h3>
             </div>
             <div class="card p-5 rounded-xl">
@@ -176,7 +176,7 @@
     <script>
         // Enlaces configurados con los GIDs exactos de cada pestaña
         const ARISTA_URLS = {
-            'Construcción': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=628361430',
+            'Resumen Const': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=628361430',
             'Interurbano': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=996326103',
             'Soporte': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=796978430',
             'Retiros': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=1741653136'
@@ -184,7 +184,7 @@
 
         let rawData = [];
         let filteredData = [];
-        let currentArista = 'Construcción';
+        let currentArista = 'Resumen Const';
         let chartEstadoInstance = null;
         let chartMotivoInstance = null;
         let leafletMap = null;
@@ -194,7 +194,7 @@
         function changeArista(arista) {
             currentArista = arista;
             const buttons = {
-                'Construcción': 'btn-construccion',
+                'Resumen Const': 'btn-construccion',
                 'Interurbano': 'btn-interurbano',
                 'Soporte': 'btn-soporte',
                 'Retiros': 'btn-retiros'
