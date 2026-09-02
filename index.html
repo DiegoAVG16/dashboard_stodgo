@@ -395,8 +395,14 @@
             if (uniqueObs.size > 0) {
                 uniqueObs.forEach(obs => {
                     const obsCard = document.createElement('div');
-                    obsCard.className = 'p-3 bg-slate-800/80 rounded-lg border border-slate-700 text-sm text-slate-200 whitespace-pre-line';
-                    obsCard.textContent = obs;
+                    obsCard.className = 'p-3 bg-slate-800/80 rounded-lg border border-slate-700 text-sm text-slate-200 leading-relaxed';
+                    
+                    // Fuerza el salto de línea y destaca las etiquetas visualmente
+                    let formattedObs = obs
+                        .replace(/Soluci[oó]n:/gi, '<br><br><span class="text-white font-semibold">Solución:</span>')
+                        .replace(/Problema:/gi, '<span class="text-white font-semibold">Problema:</span>');
+
+                    obsCard.innerHTML = formattedObs;
                     obsContainer.appendChild(obsCard);
                 });
             }else {
