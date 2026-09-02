@@ -174,12 +174,12 @@
     </div>
 
     <script>
-        // Mapeo de enlaces CSV independientes para cada pestaña/arista de Google Sheets
+        // Enlaces de exportación CSV configurados con tus GIDs exactos
         const ARISTA_URLS = {
-            'Construcción': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=628361430&single=true&output=csv',
-            'Interurbano': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=AQUI_PEGAR_GID_INTERURBANO&single=true&output=csv',
-            'Soporte': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=AQUI_PEGAR_GID_SOPORTE&single=true&output=csv',
-            'Retiros': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTabgh1d_aex6LNuLaDeTYapQrE9oU99EnWAL65ZjO0jPUXpOqIMUn9EUmoeHSUkA/pub?gid=AQUI_PEGAR_GID_RETIROS&single=true&output=csv'
+            'Construcción': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=0',
+            'Interurbano': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=996326103',
+            'Soporte': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=796978430',
+            'Retiros': 'https://docs.google.com/spreadsheets/d/1-U6Osq6rxBecQssqG7_TSdLQvgf32AEY/export?format=csv&gid=1741653136'
         };
 
         let rawData = [];
@@ -244,7 +244,7 @@
                 },
                 error: function(err) {
                     console.error(`Error al cargar datos de ${currentArista}:`, err);
-                    alert(`Verifica que la pestaña "${currentArista}" esté publicada en la web y su GID sea correcto.`);
+                    alert(`Verifica que la pestaña "${currentArista}" tenga permisos configurados como "Cualquier persona con el enlace".`);
                 }
             });
         }
