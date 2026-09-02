@@ -395,11 +395,11 @@
             if (uniqueObs.size > 0) {
                 uniqueObs.forEach(obs => {
                     const obsCard = document.createElement('div');
-                    obsCard.className = 'p-3 bg-slate-800/80 rounded-lg border border-slate-700 text-sm text-slate-200';
+                    obsCard.className = 'p-3 bg-slate-800/80 rounded-lg border border-slate-700 text-sm text-slate-200 whitespace-pre-line';
                     obsCard.textContent = obs;
                     obsContainer.appendChild(obsCard);
                 });
-            } else {
+            }else {
                 obsContainer.innerHTML = '<span class="text-xs text-slate-500">No hay observaciones registradas.</span>';
             }
 
